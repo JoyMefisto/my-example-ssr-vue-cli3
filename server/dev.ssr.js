@@ -3,24 +3,21 @@ const axios = require('axios')
 const MemoryFS = require('memory-fs')
 const fs = require('fs')
 const path = require('path')
-const { Router } = require('express')
-const router = Router()
 
-// 1、webpack
+const resolve = file => path.resolve(__dirname, file)
 const webpackConfig = require('@vue/cli-service/webpack.config')
 const { createBundleRenderer } = require('vue-server-renderer')
-
-// 2 webpack
 const serverCompiler = webpack(webpackConfig)
 const mfs = new MemoryFS()
-// 指定输出到的内存流中
 serverCompiler.outputFileSystem = mfs
-// 3 vue-ssr-server-bundle.json
+
+// По готовности конфига webpack'a сохраняем бандл
 let bundle
 serverCompiler.watch({}, (err, stats) => {
   if (err) {
     throw err
   }
+
   stats = stats.toJson()
   stats.errors.forEach(error => console.error(error))
   stats.warnings.forEach(warn => console.warn(warn))
@@ -34,45 +31,47 @@ serverCompiler.watch({}, (err, stats) => {
   console.log('new bundle generated')
 })
 
+/**
+ * Контроллер для отправка готового html документа
+ * @param req
+ * @param res
+ * @param next
+ * @returns {Q.Promise<Q.Promise<any> | * | void | boolean>}
+ */
 const handleRequest = async (req, res, next) => {
   if (!bundle) {
     return res.send('Упс, что-то пошло не так..')
   }
 
-  // const url = req.url
-
-  // if (url.includes('favicon.ico')) {
-  //   console.log(`proxy ${url}`)
-  //   // return await send(ctx, url, { root: path.resolve(__dirname, '../public') })
-  //   const publicData = await path.resolve(__dirname, '../public')
-  //   return res.send(req, url, { root: publicData })
-  // }
-
-  // 4、获取最新的 vue-ssr-client-manifest.json
+  // Ждём и получаем манифест
+  // todo: Хочется сделать без axios
   const clientManifestResp = await axios.get('http://localhost:8080/vue-ssr-client-manifest.json')
-  // const clientManifestResp = await path.resolve(__dirname, '../dist/vue-ssr-client-manifest.json')
-
   const clientManifest = clientManifestResp.data
-
+  // Renderer функция для парсинга шаблона
+  // Засовываем бандл в шаблон
   const renderer = createBundleRenderer(bundle, {
     runInNewContext: false,
-    template: fs.readFileSync(path.resolve(__dirname, '../src/index.temp.html'), 'utf-8'),
+    template: fs.readFileSync(resolve('../src/index.temp.html'), 'utf-8'),
     clientManifest: clientManifest
   })
-
+  // Контекст используется на клиенте для манипулирования состоянием
   const context = {
     url: req.url,
     cookie: req.cookies,
     host: req.headers.host
   }
-
-  // const html = await renderToString(ctx, renderer)
   const html = await renderToString(context, renderer)
-  // ctx.body = html
+
   console.log('SEND HTML FROM SERVER')
   res.send(html)
 }
 
+/**
+ * Возвращает html, отрисованного на основе контекста и шаблона
+ * @param context
+ * @param renderer
+ * @returns {Promise<unknown>}
+ */
 function renderToString (context, renderer) {
   return new Promise((resolve, reject) => {
     renderer.renderToString(context, (err, html) => {
@@ -82,6 +81,4 @@ function renderToString (context, renderer) {
     .catch(e => e)
 }
 
-router.get('*', handleRequest)
-
-module.exports = router
+module.exports = handleRequest
