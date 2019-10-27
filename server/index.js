@@ -1,9 +1,12 @@
+require('dotenv').config()
+
 const path = require('path')
 const favicon = require('serve-favicon')
 const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 const express = require('express')
 const app = express()
+const backendProxy = require('../proxy')
 
 const resolve = file => path.resolve(__dirname, file)
 const isDev = process.env.NODE_ENV !== 'production'
@@ -24,6 +27,7 @@ app.use(bodyParser.urlencoded({ extended: false })) // Returns middleware that o
 
 const controller = isDev ? require('./dev.ssr') : require('./prod.ssr')
 
+app.use(backendProxy)
 app.use('*', controller)
 
 const ip = process.env.IP || '0.0.0.0'

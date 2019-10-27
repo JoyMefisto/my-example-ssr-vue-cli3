@@ -2,6 +2,7 @@ const VueSSRServerPlugin = require('vue-server-renderer/server-plugin')
 const VueSSRClientPlugin = require('vue-server-renderer/client-plugin')
 const nodeExternals = require('webpack-node-externals')
 const merge = require('lodash.merge')
+const webpack = require('webpack')
 
 const TARGET_NODE = process.env.WEBPACK_TARGET === 'node'
 const target = TARGET_NODE ? 'server' : 'client'
@@ -43,7 +44,15 @@ module.exports = {
     optimization: {
       splitChunks: TARGET_NODE ? false : undefined
     },
-    plugins: [TARGET_NODE ? new VueSSRServerPlugin() : new VueSSRClientPlugin()]
+    plugins: [
+      TARGET_NODE ? new VueSSRServerPlugin() : new VueSSRClientPlugin(),
+      new webpack.DefinePlugin({
+        'process.env': {
+          'VUE_APP_API_ENV': TARGET_NODE ? JSON.stringify('server') : JSON.stringify('client'),
+          'VUE_APP_API_HOST': JSON.stringify(process.env.VUE_APP_API_HOST)
+        }
+      })
+    ]
   }),
   chainWebpack: config => {
     config.module
