@@ -3,6 +3,8 @@ import { createApp } from './main'
 export default context => new Promise((resolve, reject) => {
   const { app, router, store } = createApp()
 
+  console.log('context.url', context.url)
+
   router.push(context.url)
 
   // set meta info

@@ -1,13 +1,7 @@
 const axios = require('axios')
-// import https from 'https'
 
 const httpClient = axios.create({
-  baseURL: process.env.VUE_APP_API_ENV === 'server' ? process.env.VUE_APP_API_HOST : '/api/'
-  // baseURL: target === 'server' ? process.env.VUE_APP_API_HOST : '/api/'
-  // httpsAgent: new https.Agent({
-  //   rejectUnauthorized: false
-  // }),
-  // withCredentials: false
+  baseURL: process.env.VUE_APP_API_ENV === 'server' ? process.env.VUE_APP_API_HOST : '/'
 })
 
 console.log('process.env.WEBPACK_TARGET', process.env.WEBPACK_TARGET)
@@ -30,15 +24,6 @@ httpClient.interceptors.response.use(
   (error) => {
     // Если ошибка связана с отменой запроса клиентом - пробрасываем ошибку как есть.
     if (axios.isCancel(error)) return Promise.reject(error.response)
-
-    // const returnError = {
-    //   status: error.response.status || undefined,
-    //   statusText: error.response.statusText || undefined,
-    //   method: error.response.config.method || undefined,
-    //   url: error.response.config.url || undefined,
-    //   data: (error.response.data.data ? error.response.data.data : error.response.data) || {},
-    //   headers: error.response.headers || {}
-    // }
 
     return Promise.reject(error.response)
   }

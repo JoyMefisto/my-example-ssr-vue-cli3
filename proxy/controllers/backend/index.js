@@ -1,10 +1,10 @@
 require('dotenv').config()
 
-// const qs = require('qs')
-const axios = require('axios')
+const qs = require('qs')
+// const axios = require('axios')
 // const https = require('https')
 // const httpClient = require('../../../src/api/instance').default
-// const httpClient = require('../../../src/api/instance')
+const httpClient = require('../../../src/api/instance')
 // const setCookiesToBrowser = require('./_cookie')
 //
 // console.log('SERVER process.env.VUE_APP_API_HOST', process.env.VUE_APP_API_HOST)
@@ -40,27 +40,27 @@ const axios = require('axios')
 //   responseType: responseType[result] || 'arraybuffer' // default
 // })
 //
-// function setBodyToAPI (req) {
-//   return qs.stringify(req.body)
-// }
-//
-// function setHeaderToAPI (req) {
-//   const result = {
-//     headers: {
-//       ...req.headers
-//     }
-//   }
-//
-//   if (req.method.toLowerCase() === 'post') {
-//     // TODO: Опрелять content-type в экшенах,
-//     // TODO: затем брать его из post-запроса
-//     result.headers['content-type'] = 'application/x-www-form-urlencoded'
-//   }
-//
-//   delete result.headers.host
-//
-//   return result
-// }
+function setBodyToAPI (req) {
+  return qs.stringify(req.body)
+}
+
+function setHeaderToAPI (req) {
+  const result = {
+    headers: {
+      ...req.headers
+    }
+  }
+
+  if (req.method.toLowerCase() === 'post') {
+    // TODO: Опрелять content-type в экшенах,
+    // TODO: затем брать его из post-запроса
+    result.headers['content-type'] = 'application/x-www-form-urlencoded'
+  }
+
+  delete result.headers.host
+
+  return result
+}
 //
 // function finish (responseToBrowser, responseFromAPI) {
 //   // Ставим остальные хедеры и очищаем нежелательные
@@ -102,49 +102,38 @@ const axios = require('axios')
 
 module.exports = {
   makeRequestToAPI (req, res) {
+    console.log('Сюда запрос makeRequestToAPI')
     // const httpClient = getHttpClient(req.headers.accept)
     const method = req.method.toLowerCase()
-    const url = req.originalUrl.split('/').slice(2).join('/')
-    // const additionalData = method.toUpperCase() === 'GET'
-    //   ? [setHeaderToAPI(req)]
-    //   : [setBodyToAPI(req), setHeaderToAPI(req)]
+    const url = req.originalUrl.split('/').slice(1).join('/')
+    const isApi = req.originalUrl.indexOf('/api') !== -1
 
-    // res.setHeader('Access-Control-Allow-Origin', '*')
-    // const data = {"page":2,"per_page":6,"total":12,"total_pages":2,"data":[{"id":7,"email":"michael.lawson@reqres.in","first_name":"Michael","last_name":"Lawson","avatar":"https://s3.amazonaws.com/uifaces/faces/twitter/follettkyle/128.jpg"},{"id":8,"email":"lindsay.ferguson@reqres.in","first_name":"Lindsay","last_name":"Ferguson","avatar":"https://s3.amazonaws.com/uifaces/faces/twitter/araa3185/128.jpg"},{"id":9,"email":"tobias.funke@reqres.in","first_name":"Tobias","last_name":"Funke","avatar":"https://s3.amazonaws.com/uifaces/faces/twitter/vivekprvr/128.jpg"},{"id":10,"email":"byron.fields@reqres.in","first_name":"Byron","last_name":"Fields","avatar":"https://s3.amazonaws.com/uifaces/faces/twitter/russoedu/128.jpg"},{"id":11,"email":"george.edwards@reqres.in","first_name":"George","last_name":"Edwards","avatar":"https://s3.amazonaws.com/uifaces/faces/twitter/mrmoiree/128.jpg"},{"id":12,"email":"rachel.howell@reqres.in","first_name":"Rachel","last_name":"Howell","avatar":"https://s3.amazonaws.com/uifaces/faces/twitter/hebertialmeida/128.jpg"}]}
-    // console.log('data', data)
-    // res.json(data)
+    const additionalData = method.toUpperCase() === 'GET'
+      ? isApi ? [] : [setHeaderToAPI(req)]
+      : [setBodyToAPI(req), setHeaderToAPI(req)]
 
-    // ${process.env.VUE_APP_API_HOST}
-    // return httpClient[method](`${url}`, ...additionalData)
-    //   .then(
-    //     response => {
-    //       console.log('RESPONSE', response.data)
-    //
-    //       res.send(response.data)
-    //     },
-    //     error => {
-    //       res.send({ 'error': error })
-    //     }
-    //   )
+    return httpClient[method](`${process.env.VUE_APP_API_HOST}${url}`, ...additionalData)
+      .then(
+        response => {
+          console.log('RESPONSE')
 
-    return axios[method](`${process.env.VUE_APP_API_HOST}${url}`)
-      .then(response => {
-        console.log('response.data', response.data)
-        res.json(response.data)
-      })
-      .catch(error => {
-        console.log(error)
-      })
+          res.json(response.data)
+        },
+        error => {
+          console.log('ERROR')
 
-    // ${process.env.VUE_APP_API_HOST}
+          res.status(400).json({ 'error': error })
+        }
+      )
+      .catch(e => res.json(e.message))
 
-  //   return httpClient[method](`${url}`)
-  //     .then(response => {
-  //       console.log('response.data', response.data)
-  //       res.json(response.data)
-  //     })
-  //     .catch(error => {
-  //       console.log(error.message)
-  //     })
+    // return axios[method](`${process.env.VUE_APP_API_HOST}${url}`)
+    //   .then(response => {
+    //     console.log('response.data', response.data)
+    //     res.json(response.data)
+    //   })
+    //   .catch(error => {
+    //     console.log(error)
+    //   })
   }
 }

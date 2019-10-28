@@ -54,15 +54,15 @@ const handleRequest = async (req, res, next) => {
     template: fs.readFileSync(resolve('../src/index.temp.html'), 'utf-8'),
     clientManifest: clientManifest
   })
+
   // Контекст используется на клиенте для манипулирования состоянием
   const context = {
-    url: req.url,
+    url: req.baseUrl,
     cookie: req.cookies,
     host: req.headers.host
   }
   const html = await renderToString(context, renderer)
 
-  console.log('SEND HTML FROM SERVER')
   res.send(html)
 }
 
