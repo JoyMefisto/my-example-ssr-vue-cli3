@@ -41,7 +41,7 @@ function renderToString (context) {
 const handleRequest = async (req, res, next) => {
   const context = {
     title: 'ssr test',
-    url: req.url,
+    url: req.baseUrl,
     cookie: req.cookies,
     headers: req.headers
   }

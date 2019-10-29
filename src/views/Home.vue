@@ -32,15 +32,14 @@ export default {
     })
   },
   serverPrefetch () {
-    console.log('SERVERPREFETCH SERVERPREFETCH SERVERPREFETCH')
-    return this.fetchData()
+    // return this.fetchData()
   },
 
   beforeMount () {
-    // if (this.getData().length === 0) {
-    //   this.fetchData()
-    //     .catch(() => {})
-    // }
+    if (this.getData().length === 0) {
+      this.fetchData()
+        .catch(() => {})
+    }
   }
 }
 </script>

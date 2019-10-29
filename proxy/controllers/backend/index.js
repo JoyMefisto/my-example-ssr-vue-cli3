@@ -1,45 +1,29 @@
 require('dotenv').config()
 
 const qs = require('qs')
-// const axios = require('axios')
-// const https = require('https')
-// const httpClient = require('../../../src/api/instance').default
-const httpClient = require('../../../src/api/instance')
+const axios = require('axios')
+const https = require('https')
 // const setCookiesToBrowser = require('./_cookie')
-//
-// console.log('SERVER process.env.VUE_APP_API_HOST', process.env.VUE_APP_API_HOST)
-//
-// function getHttpClient (contentType) {
-//   const responseType = {
-//     'application/json': 'json',
-//     image: 'arraybuffer'
-//   }
-//
-//   const result = Object.keys(responseType).find(
-//     txt => contentType.indexOf(txt) !== -1)
-//
-//   return axios.create({
-//     baseURL: process.env.VUE_APP_API_HOST,
-//     responseType: responseType[result] || 'arraybuffer', // default
-//     httpsAgent: new https.Agent({
-//       rejectUnauthorized: false
-//     }),
-//     withCredentials: false
-//   })
-// }
 
-// const httpClient = axios.create({
-//   baseURL: process.env.VUE_APP_API_HOST,
-//   httpsAgent: new https.Agent({
-//     rejectUnauthorized: false
-//   }),
-//   withCredentials: false,
-//   headers: {
-//     'Content-Type': 'application/json;charset=UTF-8'
-//   },
-//   responseType: responseType[result] || 'arraybuffer' // default
-// })
-//
+function getHttpClient (contentType) {
+  const responseType = {
+    'application/json': 'json',
+    image: 'arraybuffer'
+  }
+
+  const result = Object.keys(responseType).find(
+    txt => contentType.indexOf(txt) !== -1)
+
+  return axios.create({
+    baseURL: process.env.VUE_APP_API_HOST,
+    responseType: responseType[result] || 'arraybuffer', // default
+    httpsAgent: new https.Agent({
+      rejectUnauthorized: false
+    }),
+    withCredentials: false
+  })
+}
+
 function setBodyToAPI (req) {
   return qs.stringify(req.body)
 }
@@ -102,8 +86,7 @@ function setHeaderToAPI (req) {
 
 module.exports = {
   makeRequestToAPI (req, res) {
-    console.log('Сюда запрос makeRequestToAPI')
-    // const httpClient = getHttpClient(req.headers.accept)
+    const httpClient = getHttpClient(req.headers.accept)
     const method = req.method.toLowerCase()
     const url = req.originalUrl.split('/').slice(1).join('/')
     const isApi = req.originalUrl.indexOf('/api') !== -1
@@ -112,28 +95,17 @@ module.exports = {
       ? isApi ? [] : [setHeaderToAPI(req)]
       : [setBodyToAPI(req), setHeaderToAPI(req)]
 
-    return httpClient[method](`${process.env.VUE_APP_API_HOST}${url}`, ...additionalData)
+    console.log(process.env.VUE_APP_API_HOST)
+
+    return httpClient[method](`${url}`, ...additionalData)
       .then(
         response => {
-          console.log('RESPONSE')
-
           res.json(response.data)
         },
         error => {
-          console.log('ERROR')
-
           res.status(400).json({ 'error': error })
         }
       )
       .catch(e => res.json(e.message))
-
-    // return axios[method](`${process.env.VUE_APP_API_HOST}${url}`)
-    //   .then(response => {
-    //     console.log('response.data', response.data)
-    //     res.json(response.data)
-    //   })
-    //   .catch(error => {
-    //     console.log(error)
-    //   })
   }
 }

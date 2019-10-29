@@ -4,10 +4,6 @@ const httpClient = axios.create({
   baseURL: process.env.VUE_APP_API_ENV === 'server' ? process.env.VUE_APP_API_HOST : '/'
 })
 
-console.log('process.env.WEBPACK_TARGET', process.env.WEBPACK_TARGET)
-console.log('process.env.VUE_APP_API_ENV', process.env.VUE_APP_API_ENV)
-console.log('process.env.VUE_APP_API_HOST', process.env.VUE_APP_API_HOST)
-
 httpClient.interceptors.request.use(
   (request) => {
     return request
